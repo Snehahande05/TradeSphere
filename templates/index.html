@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeSphere - Stock Trading Platform Simulator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Portfolio Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dark-theme">
+    
+    <!-- ==================== LOGIN PAGE ==================== -->
+    <div id="login-page" class="auth-container">
+        <div class="auth-glass-card">
+            <div class="auth-header">
+                <div class="logo-container">
+                    <i class="fa-solid fa-chart-line logo-icon"></i>
+                    <span class="logo-text">Trade<span>Sphere</span></span>
+                </div>
+                <p class="auth-subtitle">System Design Simulation Dashboard</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email"><i class="fa-regular fa-envelope"></i> Email Address</label>
+                    <input type="email" id="login-email" placeholder="name@tradesphere.com" required value="sneha@tradesphere.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" id="login-password" placeholder="Use demo password or any text" required autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label for="login-user-select"><i class="fa-solid fa-user-gear"></i> Demo Persona (Select User)</label>
+                    <select id="login-user-select">
+                        <option value="1">Sneha (Balance: ₹1,00,000)</option>
+                        <option value="2">Rahul (Balance: ₹1,00,000)</option>
+                        <option value="3">Priya (Balance: ₹1,00,000)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span>Sign In to Platform</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p><i class="fa-solid fa-circle-info"></i> Viva Tip: Select any persona to log in. You can switch users in the top bar to test matches.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== APP CONTAINER (MAIN APP) ==================== -->
+    <div id="app-container" class="app-layout hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-chart-line logo-icon"></i>
+                <span class="logo-text">Trade<span>Sphere</span></span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-gauge"></i> <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="marketwatch">
+                    <i class="fa-solid fa-list-ul"></i> <span>Market Watch</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="orderbook">
+                    <i class="fa-solid fa-book-open"></i> <span>Order Book</span>
+                    <span id="pending-badge" class="badge badge-warning hidden">0</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="trades">
+                    <i class="fa-solid fa-handshake"></i> <span>Executed Trades</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="portfolio">
+                    <i class="fa-solid fa-briefcase"></i> <span>Portfolio</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="auditlogs">
+                    <i class="fa-solid fa-file-shield"></i> <span>Audit Logs</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="profile">
+                    <i class="fa-solid fa-user-shield"></i> <span>Profile Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-user-card">
+                <div class="avatar">
+                    <span id="user-avatar-initial">S</span>
+                </div>
+                <div class="user-info">
+                    <h4 id="user-display-name">Sneha</h4>
+                    <p id="user-display-role">Trader Persona</p>
+                </div>
+                <button id="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- MAIN WINDOW -->
+        <div class="main-window">
+            
+            <!-- TOP NAVBAR -->
+            <header class="navbar">
+                <div class="nav-left">
+                    <h2 id="page-title">Dashboard</h2>
+                </div>
+                
+                <div class="nav-right">
+                    <!-- Quick Stats -->
+                    <div class="quick-stats">
+                        <div class="stat-pill">
+                            <span class="stat-label">Cash:</span>
+                            <span id="nav-cash-bal" class="stat-val">₹1,00,000.00</span>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="stat-label">NAV:</span>
+                            <span id="nav-net-worth" class="stat-val text-cyan">₹1,00,000.00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Switch User Dropdown -->
+                    <div class="user-selector-container">
+                        <label for="header-user-select"><i class="fa-solid fa-arrows-spin"></i> Persona:</label>
+                        <select id="header-user-select" class="header-select">
+                            <option value="1">Sneha</option>
+                            <option value="2">Rahul</option>
+                            <option value="3">Priya</option>
+                        </select>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Notification Indicator -->
+                    <div class="notification-bell" id="notification-trigger">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="bell-dot hidden"></span>
+                        <!-- Notification Dropdown -->
+                        <div class="notification-dropdown hidden" id="notification-box">
+                            <div class="noti-header">
+                                <span>Recent Notifications</span>
+                                <button id="clear-notifications">Clear</button>
+                            </div>
+                            <div class="noti-list" id="notifications-list">
+                                <div class="empty-noti">No new notifications.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="content-container">
+                
+                <!-- TAB: DASHBOARD -->
+                <section id="tab-dashboard" class="tab-content">
+                    <div class="dashboard-grid">
+                        
+                        <!-- Top Summary Cards -->
+                        <div class="summary-card balance-card">
+                            <div class="card-header">
+                                <span>Total Balance</span>
+                                <i class="fa-solid fa-wallet text-cyan"></i>
+                            </div>
+                            <h2 id="dash-cash-balance">₹1,00,000.00</h2>
+                            <p class="card-desc">Funds available for buying stocks</p>
+                        </div>
+                        
+                        <div class="summary-card portfolio-val-card">
+                            <div class="card-header">
+                                <span>Portfolio Market Value</span>
+                                <i class="fa-solid fa-chart-pie text-cyan"></i>
+                            </div>
+                            <h2 id="dash-portfolio-value">₹0.00</h2>
+                            <p class="card-desc">Current value of all stock holdings</p>
+                        </div>
+                        
+                        <div class="summary-card pnl-card">
+                            <div class="card-header">
+                                <span>Unrealized P&L</span>
+                                <i class="fa-solid fa-chart-line" id="dash-pnl-icon"></i>
+                            </div>
+                            <h2 id="dash-unrealized-pnl">₹0.00</h2>
+                            <p id="dash-unrealized-pnl-pct" class="card-desc">0.00% Overall Profit/Loss</p>
+                        </div>
+                        
+                        <!-- System Design Flow Card (Viva presentation aid) -->
+                        <div class="summary-card system-flow-card span-three-cols">
+                            <div class="card-header">
+                                <span>System Design Flow</span>
+                                <i class="fa-solid fa-route text-cyan"></i>
+                            </div>
+                            <div class="flow-container">
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-user"></i></div>
+                                    <div class="flow-step-label">User</div>
+                                </div>
+                                <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                                    <div class="flow-step-label">Order Validation</div>
+                                </div>
+                                <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                                    <div class="flow-step-label">Matching Engine</div>
+                                </div>
+                                <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-handshake"></i></div>
+                                    <div class="flow-step-label">Trade Execution</div>
+                                </div>
+                                <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-briefcase"></i></div>
+                                    <div class="flow-step-label">Portfolio Update</div>
+                                </div>
+                                <div class="flow-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+                                <div class="flow-step">
+                                    <div class="flow-step-icon"><i class="fa-solid fa-file-shield"></i></div>
+                                    <div class="flow-step-label">Audit Log</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chart Card -->
+                        <div class="chart-container-card span-two-cols">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-chart-area text-cyan"></i> Portfolio Asset Distribution</h3>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="portfolioDistributionChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- System Design Overview Card -->
+                        <div class="summary-card system-info-card">
+                            <div class="card-header">
+                                <span>System Design Concept</span>
+                                <i class="fa-solid fa-diagram-project text-warning"></i>
+                            </div>
+                            <div class="system-mini-notes">
+                                <p><strong>Matching Engine:</strong> Price-Time Priority (FIFO). Matches occur when Bid &ge; Ask.</p>
+                                <p><strong>ACID Transactions:</strong> Balance updates, stock updates, trade records, and audit logs are handled consistently.</p>
+                            </div>
+                            <button class="btn btn-secondary btn-sm btn-block" id="btn-show-architecture" type="button">
+                                <i class="fa-solid fa-network-wired"></i> View System Architecture
+                            </button>
+                        </div>
+                        
+                        <!-- Active Orders Mini List -->
+                        <div class="table-card span-two-cols">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-spinner text-cyan"></i> Pending / Active Orders</h3>
+                                <button class="btn btn-secondary btn-xs btn-tab-switch" data-tab="orderbook">View Full Book</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Stock</th>
+                                            <th>Type</th>
+                                            <th>Remaining Qty</th>
+                                            <th>Limit Price</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dash-active-orders-body">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Panel -->
+                        <div class="quick-actions-card">
+                            <div class="card-header">
+                                <h3>Quick Actions</h3>
+                            </div>
+                            <div class="action-buttons-grid">
+                                <button class="action-btn buy-action" id="action-buy-stock">
+                                    <i class="fa-solid fa-circle-arrow-up"></i>
+                                    <span>Buy Stock</span>
+                                </button>
+                                <button class="action-btn sell-action" id="action-sell-stock">
+                                    <i class="fa-solid fa-circle-arrow-down"></i>
+                                    <span>Sell Stock</span>
+                                </button>
+                                <button class="action-btn port-action" id="action-view-holdings">
+                                    <i class="fa-solid fa-briefcase"></i>
+                                    <span>View Portfolio</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB: MARKET WATCH -->
+                <section id="tab-marketwatch" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>Market Watch</h3>
+                        <p class="section-desc">Click BUY or SELL to trigger the trading terminal for a stock.</p>
+                    </div>
+                    
+                    <div class="market-grid" id="market-grid-container">
+                        <!-- Dynamic Stock Cards -->
+                    </div>
+                </section>
+
+                <!-- TAB: ORDER BOOK -->
+                <section id="tab-orderbook" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>Order Book</h3>
+                        <p class="section-desc">List of all orders placed in this session (Pending, Partially Executed, Executed, Cancelled).</p>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>User</th>
+                                        <th>Stock</th>
+                                        <th>Type</th>
+                                        <th>Qty (Filled / Total)</th>
+                                        <th>Limit Price</th>
+                                        <th>Status</th>
+                                        <th>Time</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderbook-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: EXECUTED TRADES -->
+                <section id="tab-trades" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>Executed Trades</h3>
+                        <p class="section-desc">Real-time ledger of completed transactions matched by the TradeSphere engine.</p>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Trade ID</th>
+                                        <th>Buyer</th>
+                                        <th>Seller</th>
+                                        <th>Stock</th>
+                                        <th>Quantity</th>
+                                        <th>Execution Price</th>
+                                        <th>Total Value</th>
+                                        <th>Executed Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trades-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: PORTFOLIO -->
+                <section id="tab-portfolio" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>Portfolio Holdings</h3>
+                        <p class="section-desc">Track current stock inventory, buy price basis, and unrealized profit/loss.</p>
+                    </div>
+
+                    <div class="portfolio-summary-bar">
+                        <div class="sum-item">
+                            <span class="label">Total Cost Basis</span>
+                            <span id="port-total-cost" class="val">₹0.00</span>
+                        </div>
+                        <div class="sum-item">
+                            <span class="label">Current Market Value</span>
+                            <span id="port-total-value" class="val">₹0.00</span>
+                        </div>
+                        <div class="sum-item">
+                            <span class="label">Total Unrealized P&L</span>
+                            <span id="port-total-pnl" class="val">₹0.00 (0.00%)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Stock</th>
+                                        <th>Company Name</th>
+                                        <th>Quantity Held</th>
+                                        <th>Average Cost</th>
+                                        <th>LTP (Current Price)</th>
+                                        <th>Cost Basis</th>
+                                        <th>Current Value</th>
+                                        <th>P&L</th>
+                                        <th>P&L %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="portfolio-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: AUDIT LOGS -->
+                <section id="tab-auditlogs" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>System Audit Trail</h3>
+                        <p class="section-desc">Centralized logs tracking balance locks, validation queries, state updates, and transaction execution details.</p>
+                    </div>
+                    
+                    <div class="table-card">
+                        <div class="table-wrapper">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Log ID</th>
+                                        <th>Action Type</th>
+                                        <th>Description</th>
+                                        <th>Timestamp</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditlogs-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+
+
+                <!-- TAB: PROFILE SETTINGS -->
+                <section id="tab-profile" class="tab-content hidden">
+                    <div class="section-header">
+                        <h3>Profile Settings</h3>
+                        <p class="section-desc">Manage demo account details, password, notification preferences, and theme settings.</p>
+                    </div>
+
+                    <div class="profile-grid">
+                        <div class="profile-card">
+                            <div class="profile-card-header">
+                                <div class="profile-avatar-lg" id="profile-avatar-lg">S</div>
+                                <div>
+                                    <h3 id="profile-username">Sneha</h3>
+                                    <p id="profile-email-display">sneha@tradesphere.com</p>
+                                </div>
+                            </div>
+
+                            <div class="profile-info-list">
+                                <div class="profile-info-row">
+                                    <span>User ID</span>
+                                    <strong id="profile-user-id">1</strong>
+                                </div>
+                                <div class="profile-info-row">
+                                    <span>Account Balance</span>
+                                    <strong id="profile-balance">₹1,00,000.00</strong>
+                                </div>
+                                <div class="profile-info-row">
+                                    <span>Account Type</span>
+                                    <strong>Demo Trading Account</strong>
+                                </div>
+                                <div class="profile-info-row">
+                                    <span>Last Login</span>
+                                    <strong id="profile-last-login">Current Session</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-card">
+                            <div class="card-header profile-section-title">
+                                <span>Update Profile</span>
+                                <i class="fa-solid fa-user-pen text-cyan"></i>
+                            </div>
+
+                            <form id="profile-settings-form">
+                                <div class="form-group">
+                                    <label for="profile-email"><i class="fa-regular fa-envelope"></i> Email Address</label>
+                                    <input type="email" id="profile-email" class="form-control" autocomplete="email" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-palette"></i> Theme Preference</label>
+                                    <div class="preference-toggle">
+                                        <label><input type="radio" name="profile-theme" value="dark" checked> Dark</label>
+                                        <label><input type="radio" name="profile-theme" value="light"> Light</label>
+                                    </div>
+                                </div>
+
+                                <div class="profile-checkbox-group">
+                                    <label><input type="checkbox" id="pref-trade-alerts" checked> Trade alerts</label>
+                                    <label><input type="checkbox" id="pref-portfolio-updates" checked> Portfolio updates</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Profile Settings
+                                </button>
+                                <p id="profile-message" class="profile-form-message hidden"></p>
+                            </form>
+                        </div>
+
+                        <div class="profile-card">
+                            <div class="card-header profile-section-title">
+                                <span>Security</span>
+                                <i class="fa-solid fa-lock text-warning"></i>
+                            </div>
+
+                            <form id="change-password-form">
+                                <div class="form-group">
+                                    <label for="current-password">Current Password</label>
+                                    <input type="password" id="current-password" class="form-control" autocomplete="current-password" placeholder="Default: demo123" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-password">New Password</label>
+                                    <input type="password" id="new-password" class="form-control" autocomplete="new-password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirm-password">Confirm Password</label>
+                                    <input type="password" id="confirm-password" class="form-control" autocomplete="new-password" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-secondary btn-block">
+                                    <i class="fa-solid fa-key"></i> Change Password
+                                </button>
+                                <p id="password-message" class="profile-form-message hidden"></p>
+                            </form>
+                        </div>
+
+                        <div class="profile-card session-card">
+                            <div class="card-header profile-section-title">
+                                <span>Session Information</span>
+                                <i class="fa-solid fa-desktop text-cyan"></i>
+                            </div>
+                            <div class="profile-info-list">
+                                <div class="profile-info-row">
+                                    <span>Status</span>
+                                    <strong class="text-success">Active</strong>
+                                </div>
+                                <div class="profile-info-row">
+                                    <span>Device</span>
+                                    <strong>Browser Demo Session</strong>
+                                </div>
+                                <div class="profile-info-row">
+                                    <span>Backend</span>
+                                    <strong>Flask API + SQLite</strong>
+                                </div>
+                            </div>
+                            <button class="btn btn-sell btn-block" id="profile-logout-btn" type="button">
+                                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ==================== ORDER MODAL (BUY/SELL FORM) ==================== -->
+    <div id="order-modal" class="modal-overlay hidden">
+        <div class="modal-card glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-cash-register"></i> Place Trade Order</h3>
+                <button id="close-order-modal-btn" class="close-btn">&times;</button>
+            </div>
+            
+            <form id="order-placement-form">
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="order-user-select"><i class="fa-solid fa-user"></i> Trader Persona</label>
+                        <select id="order-user-select" class="form-control">
+                            <option value="1">Sneha</option>
+                            <option value="2">Rahul</option>
+                            <option value="3">Priya</option>
+                        </select>
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="order-stock-select"><i class="fa-solid fa-cubes"></i> Select Stock</label>
+                        <select id="order-stock-select" class="form-control">
+                            <option value="TCS">TCS</option>
+                            <option value="INFY">INFY</option>
+                            <option value="RELIANCE">RELIANCE</option>
+                            <option value="HDFCBANK">HDFCBANK</option>
+                            <option value="WIPRO">WIPRO</option>
+                            <option value="SBIN">SBIN</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Order Type Toggle -->
+                <div class="form-group">
+                    <label>Order Action</label>
+                    <div class="order-action-toggle">
+                        <input type="radio" id="toggle-buy" name="orderType" value="BUY" checked>
+                        <label for="toggle-buy" class="toggle-label label-buy">BUY</label>
+                        
+                        <input type="radio" id="toggle-sell" name="orderType" value="SELL">
+                        <label for="toggle-sell" class="toggle-label label-sell">SELL</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="order-qty"><i class="fa-solid fa-calculator"></i> Quantity</label>
+                        <input type="number" id="order-qty" min="1" step="1" value="5" class="form-control" required>
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="order-price"><i class="fa-solid fa-indian-rupee-sign"></i> Limit Price (₹)</label>
+                        <input type="number" id="order-price" min="0.01" step="0.01" value="3500" class="form-control" required>
+                    </div>
+                </div>
+
+                <!-- Summary Estimator Box -->
+                <div class="estimator-box">
+                    <div class="est-row">
+                        <span>Available Cash:</span>
+                        <span id="est-avail-cash">₹1,00,000.00</span>
+                    </div>
+                    <div class="est-row">
+                        <span>Shares Available to Sell:</span>
+                        <span id="est-avail-shares">0 shares</span>
+                    </div>
+                    <hr class="est-divider">
+                    <div class="est-row est-total">
+                        <span>Estimated Value:</span>
+                        <span id="est-total-cost">₹17,500.00</span>
+                    </div>
+                    <div class="est-row est-warn hidden" id="est-error-msg">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Validation Error message here.</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancel-order-modal-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="submit-order-btn" class="btn btn-buy btn-block">Place BUY Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== ARCHITECTURE SYSTEM DESIGN MODAL ==================== -->
+    <div id="architecture-modal" class="modal-overlay hidden">
+        <div class="modal-card architecture-card glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-network-wired"></i> TradeSphere System Architecture</h3>
+                <button id="close-arch-modal-btn" class="close-btn" type="button">&times;</button>
+            </div>
+
+            <div class="modal-body architecture-modal-body">
+                <div class="architecture-image-wrapper">
+                    <img src="/static/images/system_architecture.png"
+                         class="architecture-image"
+                         alt="TradeSphere System Architecture Diagram">
+                </div>
+
+                <div class="architecture-description">
+                    <strong>Core Workflow:</strong>
+                    User Interface → Flask API Gateway → Authentication → Order Management →
+                    Validation → Matching Engine → Trade Execution → Portfolio Service →
+                    SQLite Database → Audit Logs → Notification.
+                </div>
+
+                <div class="architecture-notes">
+                    <h4>Viva Key Points</h4>
+                    <ul>
+                        <li><strong>Matching Engine:</strong> Matches buy and sell orders using price-time priority.</li>
+                        <li><strong>Consistency:</strong> Trade execution updates order, balance, portfolio, trade, and audit records together.</li>
+                        <li><strong>Scalability:</strong> In real systems, Kafka, Redis, WebSocket, and distributed matching engines are used.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="modal-actions architecture-modal-actions">
+                <button class="btn btn-primary btn-block" id="close-arch-btn" type="button">Close Diagram</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
