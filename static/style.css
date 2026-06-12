@@ -829,6 +829,7 @@ body.light-theme .bell-dot {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
+    width : 100%;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
@@ -847,12 +848,16 @@ body.light-theme .bell-dot {
 
 .table-wrapper {
     overflow-x: auto;
+    overflow-y: auto;
     width: 100%;
+    max-height: 500px ;
+    display: block;
 }
 
 /* ==================== TABLES ==================== */
 .custom-table {
-    width: 100%;
+    min-width: 1200px;
+    width: max-content;
     border-collapse: collapse;
     text-align: left;
 }
@@ -866,12 +871,14 @@ body.light-theme .bell-dot {
     letter-spacing: 0.5px;
     padding: 12px 24px;
     border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
 }
 
 .custom-table td {
     padding: 14px 24px;
     border-bottom: 1px solid var(--table-row-border);
     color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .custom-table tbody tr:last-child td {
