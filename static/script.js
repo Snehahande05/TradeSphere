@@ -41,7 +41,11 @@ const dom = {
     marketGridContainer: document.getElementById('market-grid-container'),
     orderbookTableBody: document.getElementById('orderbook-table-body'),
     tradesTableBody: document.getElementById('trades-table-body'),
+    dashActiveOrdersBody: document.getElementById('dash-active-orders-body'),
     portfolioTableBody: document.getElementById('portfolio-table-body'),
+    portTotalCost: document.getElementById('port-total-cost'),
+    portTotalValue: document.getElementById('port-total-value'),
+    portTotalPnl: document.getElementById('port-total-pnl'),
     auditlogsTableBody: document.getElementById('auditlogs-table-body'),
     dashCashBalance: document.getElementById('dash-cash-balance'),
     dashPortfolioValue: document.getElementById('dash-portfolio-value'),
@@ -69,7 +73,12 @@ const dom = {
     architectureBtn: document.getElementById('btn-show-architecture'),
     architectureModal: document.getElementById('architecture-modal'),
     closeArchModalBtn: document.getElementById('close-arch-modal-btn'),
-    closeArchBtn: document.getElementById('close-arch-btn')
+    closeArchBtn: document.getElementById('close-arch-btn'),
+    notificationTrigger: document.getElementById('notification-trigger'),
+    notificationBox: document.getElementById('notification-box'),
+    notificationsList: document.getElementById('notifications-list'),
+    bellDot: document.querySelector('.bell-dot'),
+    clearNotifications: document.getElementById('clear-notifications')
 };
 
 function showElement(el) {
@@ -134,6 +143,7 @@ function fetchJson(path) {
     });
 }
 
+
 async function loadUsers() {
     AppState.users = await fetchJson('/api/users');
 }
@@ -177,9 +187,34 @@ async function refreshData() {
         renderPortfolio();
         renderAuditLogs();
         renderOrderFormOptions();
+        renderNotifications();
     } catch (err) {
         console.error('Failed to load app data', err);
     }
+}
+
+function renderNotifications() {
+    if (!dom.notificationsList) return;
+
+    const latestLogs = AppState.auditLogs.slice(0, 5);
+
+    if (!latestLogs.length) {
+        dom.notificationsList.innerHTML =
+            '<div class="empty-noti">No new notifications.</div>';
+
+        if (dom.bellDot) dom.bellDot.classList.add('hidden');
+        return;
+    }
+
+    dom.notificationsList.innerHTML = latestLogs.map(log => `
+        <div class="noti-item">
+            <strong>${log.action}</strong><br>
+            ${log.details}
+            <span class="time">${log.timestamp}</span>
+        </div>
+    `).join('');
+
+    if (dom.bellDot) dom.bellDot.classList.remove('hidden');
 }
 
 function renderHeader() {
@@ -225,6 +260,7 @@ function renderDashboard() {
     dom.dashUnrealizedPnlPct.textContent = `${pnlPct}% Overall Profit/Loss`;
     renderPendingBadge();
     renderPortfolioChart();
+    renderDashboardActiveOrders();
 }
 
 function renderPendingBadge() {
@@ -321,10 +357,40 @@ function renderTrades() {
 
 function renderPortfolio() {
     if (!dom.portfolioTableBody) return;
+
     if (!AppState.portfolio || !AppState.portfolio.holdings.length) {
         dom.portfolioTableBody.innerHTML = '<tr><td colspan="10" class="text-muted" style="text-align: center; padding: 40px 0;">No active portfolio holdings.</td></tr>';
+
+        dom.portTotalCost.textContent = formatRupee(0);
+        dom.portTotalValue.textContent = formatRupee(0);
+        dom.portTotalPnl.textContent = `${formatRupee(0)} (0.00%)`;
+
         return;
     }
+
+    // Calculate portfolio summary values
+    const totalCost = AppState.portfolio.holdings.reduce(
+        (sum, row) => sum + Number(row.total_cost || 0),
+        0
+    );
+
+    const totalValue = AppState.portfolio.holdings.reduce(
+        (sum, row) => sum + Number(row.current_value || 0),
+        0
+    );
+
+    const totalPnl = totalValue - totalCost;
+
+    const pnlPct = totalCost > 0
+        ? ((totalPnl / totalCost) * 100).toFixed(2)
+        : "0.00";
+
+    // Update portfolio summary cards
+    dom.portTotalCost.textContent = formatRupee(totalCost);
+    dom.portTotalValue.textContent = formatRupee(totalValue);
+    dom.portTotalPnl.textContent = `${formatRupee(totalPnl)} (${pnlPct}%)`;
+
+    // Update portfolio table
     dom.portfolioTableBody.innerHTML = AppState.portfolio.holdings.map(row => `
         <tr>
             <td>${AppState.portfolio.username}</td>
@@ -666,6 +732,22 @@ function attachEvents() {
         });
     });
 
+    dom.notificationTrigger?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    dom.notificationBox.classList.toggle('hidden');
+    });
+
+dom.clearNotifications?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    dom.notificationsList.innerHTML =
+        '<div class="empty-noti">No new notifications.</div>';
+    dom.bellDot?.classList.add('hidden');
+    });
+
+document.addEventListener('click', () => {
+    dom.notificationBox?.classList.add('hidden');
+   });
+
     document.getElementById('action-buy-stock')?.addEventListener('click', () => openOrderModal(AppState.stocks[0]?.symbol, 'BUY'));
     document.getElementById('action-sell-stock')?.addEventListener('click', () => openOrderModal(AppState.stocks[0]?.symbol, 'SELL'));
     document.getElementById('action-view-holdings')?.addEventListener('click', () => setActiveTab('portfolio'));
@@ -678,6 +760,39 @@ function attachEvents() {
     dom.orderUserSelect.addEventListener('change', updateOrderEstimator);
     dom.toggleBuy.addEventListener('change', () => { setOrderButtonText(); updateOrderEstimator(); });
     dom.toggleSell.addEventListener('change', () => { setOrderButtonText(); updateOrderEstimator(); });
+}
+
+function renderDashboardActiveOrders() {
+    if (!dom.dashActiveOrdersBody) return;
+
+    const activeOrders = AppState.orders.filter(order =>
+        ['PENDING', 'PARTIALLY_EXECUTED'].includes(order.status)
+    );
+
+    if (!activeOrders.length) {
+        dom.dashActiveOrdersBody.innerHTML =
+            '<tr><td colspan="6" class="text-muted" style="text-align:center; padding:30px 0;">No active orders.</td></tr>';
+        return;
+    }
+
+    dom.dashActiveOrdersBody.innerHTML = activeOrders.slice(0, 5).map(order => `
+        <tr>
+            <td>${order.symbol}</td>
+            <td>
+                <span class="badge ${order.type === 'BUY' ? 'badge-success' : 'badge-danger'}">
+                    ${order.type}
+                </span>
+            </td>
+            <td>${order.remainingQty || order.quantity}</td>
+            <td>${formatRupee(order.price)}</td>
+            <td>
+                <span class="badge ${order.status === 'PENDING' ? 'badge-warning' : 'badge-info'}">
+                    ${order.status}
+                </span>
+            </td>
+            <td>-</td>
+        </tr>
+    `).join('');
 }
 
 function initApp() {
